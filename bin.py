@@ -28,10 +28,13 @@ class Bin:
     def getBinary(self):
         return self.binary
 
-"""
+    def getHex(self):
+        return hex(int(self.binary, 2)).upper()[2:]
+
+
 # testing
 x = Bin("7FF")
 y = Bin("7FE")
 print(x.sumKBit(0))
+print(y.getHex())
 print(x.getBinary() <= y.getBinary())
-"""
