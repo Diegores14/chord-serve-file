@@ -1,5 +1,9 @@
 import zmq
 import sys
+
+from bin import Bin
+
+
 tcp = "tcp://"
 
 class Server:
@@ -15,8 +19,11 @@ class Server:
         self.IPNext = IPNext
         self.portNext = portNext
         self.k = k
-        self.numElements = (2**k)
-        self.id = id
+
+        self.numElements = Bin(hex((2**k)-1)[2:])
+
+        self.id = Bin(id)#aca va entrar la mac, debe crear una funcion que cuadre la mac como sha1
+        
         self.listen.bind(tcp + self.IPListen + ":" + self.portListen)
         self.idPredecessor = None
         self.idSuccessor = None
@@ -38,9 +45,9 @@ class Server:
 
 
     def idIsInMyInterval(self,data):
-        """recive data with id wanted, return 1 if the id is in my interval, else return 0"""
+        """recive data with id hex wanted, return 1 if the id is in my interval, else return 0"""
         ans = None
-        num = data[1].decode()
+        num = Bin(data[1].decode())
 
         if self.idPredecessor < self.id:
 
@@ -48,16 +55,18 @@ class Server:
         
         else:
             #el id del predecesor es mayor que mi id
-            ans = self.idPredecessor < num < str(self.numElements) or "0" <= num <= self.id
+            ans = self.idPredecessor < num <= self.numElements or Bin("0") <= num <= self.id
 
         ans = str(int(ans))
         self.listen.send(ans.encode())
 
 
     def idIsInMySuccesor(self, data):
-        
+        """
+            recive data with id hex wanted, return 1 if the id is in the succesor interval, else return 0
+        """
         ans = None
-        num = data[1].decode()
+        num = Bin(data[1].decode())
         
         #print("id:", self.id)
         #print("idSuccessor:", self.idSuccessor)
@@ -68,7 +77,7 @@ class Server:
 
         else :
             #print("por el else")
-            ans = (self.id < num < str(self.numElements)) or ("0" <= num <= self.idSuccessor) # convertir esto como un string hexadecimal
+            ans = (self.id < num <= self.numElements or Bin("0") <= num <= self.idSuccessor) # convertir esto como un string hexadecimal
 
         ans = str(int(ans))
         self.listen.send(ans.encode())
@@ -82,24 +91,24 @@ class Server:
     def find(self):
 
         self.next.connect(tcp + self.IPNext + ":" + self.portNext)
-        self.next.send_multipart([b"getSuccessor"])
-        print("getSuccessor:", self.next.recv_multipart())
+        self.next.send_multipart([b"idIsInMyInterval", self.id.getHex().encode()])
+        print("idIsInMyInterval:", self.next.recv_multipart())
 
     def bootstrap(self):
 
         self.next.connect(tcp + self.IPNext + ":" + self.portNext)
-        self.next.send_multipart([b"updatePredecessor", self.id.encode()])
+        self.next.send_multipart([b"updatePredecessor", self.id.getHex().encode()])
 
         data = self.listen.recv_multipart()
         self.operation[data[0].decode()](data)
 
-        self.idSuccessor = self.idPredecessor
+        self.idSuccessor = Bin(self.idPredecessor.getHex())
         
         self.next.recv()
 
     def updatePredecessor(self, data):
 
-        self.idPredecessor = data[1].decode()
+        self.idPredecessor = Bin(data[1].decode())
         print("New Predecessor :", self.idPredecessor)
         self.listen.send(b"OK")
 
@@ -120,12 +129,11 @@ except:
 
 
 """
-
-argv[1] -> ipListen:
-argv[2] -> portListen:
-argv[3] -> ipNext:
-argv[4] -> portNext:
-argv[5] -> bootstrap: values 1 o 0
-
+argv[1] -> id:
+argv[2] -> ipListen:
+argv[3] -> portListen:
+argv[4] -> ipNext:
+argv[5] -> portNext:
+argv[6] -> bootstrap: values 1 o 0// opcional
 """
-server = Server(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], bs, k = 3)
+server = Server(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], bs, k = 4)

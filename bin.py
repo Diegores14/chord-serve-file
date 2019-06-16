@@ -66,10 +66,22 @@ class Bin:
 
         return self.getBinary() >= other.getBinary()
 
+    def __str__(self):
 
-# testing
-x = Bin("0FF")
-y = Bin("00F")
-print(x.sumKBit(0))
-print(y.getHex())
-print(x == y)
+        return self.getHex()
+
+
+if __name__ == "__main__":
+    
+    x = hex(25)[2:]
+
+    b = Bin(x)
+    print(b)
+    # testing
+    """
+    x = Bin("0FF")
+    y = Bin("00F")
+    print(x.sumKBit(0))
+    print(y.getHex())
+    print(x == y)
+    """
