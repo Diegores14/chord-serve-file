@@ -94,6 +94,7 @@ class Server:
         self.operation[data[0].decode()](data)
 
         self.idSuccessor = self.idPredecessor
+        
         self.next.recv()
 
     def updatePredecessor(self, data):
