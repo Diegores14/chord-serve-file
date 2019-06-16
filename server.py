@@ -23,7 +23,7 @@ class Server:
         self.numElements = Bin(hex((2**k)-1)[2:])
 
         self.id = Bin(id)#aca va entrar la mac, debe crear una funcion que cuadre la mac como sha1
-        
+        print("my id:", self.id.getHex())
         self.listen.bind(tcp + self.IPListen + ":" + self.portListen)
         self.idPredecessor = None
         self.idSuccessor = None
@@ -31,7 +31,9 @@ class Server:
         self.operation = {"updatePredecessor": self.updatePredecessor, 
                             "idIsInMySuccesor": self.idIsInMySuccesor,
                             "idIsInMyInterval": self.idIsInMyInterval,
-                            "getSuccessor": self.getSuccessor}
+                            "getSuccessor": self.getSuccessor,
+                            "getServerID": self.getServerID,
+                            "changeTheSuccessorInformation": self.changeTheSuccessorInformation }
 
         print("Server IP:", self.IPListen + ":" + self.portListen)
 
@@ -41,7 +43,9 @@ class Server:
             self.run()
         else :
             
-            self.find()
+            #self.find()
+            self.addServerToChord()
+            self.run()
 
 
     def idIsInMyInterval(self,data):
@@ -106,10 +110,7 @@ class Server:
         self.idPredecessor = Bin(data[1].decode())
         print("New Predecessor :", self.idPredecessor)
         self.listen.send(b"OK")
-
-    def updateSucessor(self, data):
-        """one server tell me who is him, his id is my new successor"""
-        pass
+        
 
     def find(self):
 
@@ -129,15 +130,75 @@ class Server:
                     
             if ifind:
                 
-                return (res[0].decode() , res[1].decode())
+                #print(res)
+                return (res[0].decode() , res[1].decode())#ip_port for my ubication
 
             else:
                 print("Move to:", res[0].decode() + ":" + res[1].decode())
                 self.IPNext = res[0].decode()
                 self.portNext = res[1].decode()
                 self.next.disconnect(ip_port)
-                
-            
+
+    def getServerID(self, data):
+        """return the id server"""
+
+        self.listen.send(self.id.getHex().encode())
+
+    def changeTheSuccessorInformation(self, data):
+        
+        ip = data[1].decode()
+        port = data[2].decode()
+        ids = data[3].decode()
+
+        self.next.disconnect(tcp + self.IPNext + ":" + self.portNext)
+        self.IPNext = ip
+        self.portNext = port
+        self.idSuccessor = Bin(ids)
+        self.next.connect(tcp + self.IPNext + ":" + self.portNext)
+
+        self.listen.send(b'Se actualiza successor')
+
+    def addServerToChord(self):
+        """Add in the middel to two server in the chord
+            TODO 
+            send all files in the new successor server and me    
+        """
+        #init the socket listen, that is in the __init__
+
+
+        ipNewSuccessor, portNewSuccessor = self.find()
+        #send to my predecessor my ip, port and id
+        self.next.send_multipart([b'changeTheSuccessorInformation', self.IPListen.encode(), self.portListen.encode(), self.id.getHex().encode()])
+        print(self.next.recv().decode())
+
+        #get id of my predeccessor
+        self.next.send_multipart([b'getServerID'])
+        idp = self.next.recv().decode()
+        self.next.disconnect(tcp + self.IPNext + ":" + self.portNext)
+        print("id new predeccessor:", idp)
+        self.idPredecessor = Bin(idp)
+
+        #connect to my successor
+        self.IPNext = ipNewSuccessor
+        self.portNext = portNewSuccessor
+        print("my successor is:", tcp + self.IPNext + ":" + self.portNext)
+        self.next.connect(tcp + self.IPNext + ":" + self.portNext)
+        self.next.send_multipart([b'getServerID'])
+        ids = self.next.recv().decode()
+        self.idSuccessor = Bin(ids)
+
+        #tell to successor the id of his new predecessor
+        self.next.send_multipart([b"updatePredecessor", self.id.getHex().encode()])
+        print("update successor id",self.next.recv())
+
+        #tell to succesor thah send me my files
+
+
+        #tell to all servers to update the finger table
+
+
+
+
     def run(self):
 
         print("Server is running")
