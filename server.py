@@ -88,12 +88,6 @@ class Server:
         #cuando exista finger table hay que hacer un get succesor para cliente como para 
         #servidor, este sera el del servidor
 
-    def find(self):
-
-        self.next.connect(tcp + self.IPNext + ":" + self.portNext)
-        self.next.send_multipart([b"idIsInMyInterval", self.id.getHex().encode()])
-        print("idIsInMyInterval:", self.next.recv_multipart())
-
     def bootstrap(self):
 
         self.next.connect(tcp + self.IPNext + ":" + self.portNext)
@@ -107,11 +101,43 @@ class Server:
         self.next.recv()
 
     def updatePredecessor(self, data):
-
+        """the predecessor tell me who is him, his id"""
+        
         self.idPredecessor = Bin(data[1].decode())
         print("New Predecessor :", self.idPredecessor)
         self.listen.send(b"OK")
 
+    def updateSucessor(self, data):
+        """one server tell me who is him, his id is my new successor"""
+        pass
+
+    def find(self):
+
+        """find the ip and port of the server that contain my id, i am his new predeccessor"""
+        while True:
+
+            ip_port = tcp + self.IPNext + ":" + self.portNext
+            print("Search ubication in:", ip_port)
+
+            self.next.connect(ip_port)
+
+            self.next.send_multipart([b"idIsInMySuccesor", self.id.getHex().encode()])#my id is in the next of my next
+            ifind = int(self.next.recv().decode())
+
+            self.next.send_multipart([b"getSuccessor"])#i get the ip of the next
+            res = self.next.recv_multipart()
+                    
+            if ifind:
+                
+                return (res[0].decode() , res[1].decode())
+
+            else:
+                print("Move to:", res[0].decode() + ":" + res[1].decode())
+                self.IPNext = res[0].decode()
+                self.portNext = res[1].decode()
+                self.next.disconnect(ip_port)
+                
+            
     def run(self):
 
         print("Server is running")
