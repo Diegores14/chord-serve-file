@@ -105,3 +105,6 @@ venv.bak/
 
 #visual code
 .vscode
+
+#archivos de descarga
+archivo*/

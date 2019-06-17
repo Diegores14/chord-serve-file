@@ -2,6 +2,7 @@ import zmq
 import sys
 
 from bin import Bin
+from folder import Folder
 
 
 tcp = "tcp://"
@@ -11,8 +12,11 @@ class Server:
     context = zmq.Context()
     listen = context.socket(zmq.REP)
     next = context.socket(zmq.REQ)
+    
 
     def __init__(self, id, IPListen, portListen, IPNext, portNext, bootstrap, k = 156):
+
+        self.folder = Folder(id =portListen)
 
         self.IPListen = IPListen
         self.portListen = portListen
