@@ -32,12 +32,16 @@ class Server:
         self.idPredecessor = None
         self.idSuccessor = None
 
+
+        #query of disponible operations in the server's
         self.operation = {"updatePredecessor": self.updatePredecessor, 
                             "idIsInMySuccesor": self.idIsInMySuccesor,
                             "idIsInMyInterval": self.idIsInMyInterval,
                             "getSuccessor": self.getSuccessor,
                             "getServerID": self.getServerID,
-                            "changeTheSuccessorInformation": self.changeTheSuccessorInformation }
+                            "changeTheSuccessorInformation": self.changeTheSuccessorInformation,
+                            "upload": self.upload,
+                            "download": self.download }
 
         print("Server IP:", self.IPListen + ":" + self.portListen)
 
@@ -202,6 +206,31 @@ class Server:
 
 
 
+    def upload(self, data):
+        """data = [operation, sha, bytestosave] """
+
+        shaname = data[1].decode()
+        path = self.folder.getpath(shaname)
+        print("save into server:", path)
+        with open(path, "ab") as f:
+            f.write(data[2])
+
+        msj = "Chunk saved in " + self.id.getHex()
+        self.listen.send(msj.encode())
+
+    def download(self, data):
+        """data = [operation, sha] """
+        
+        shaname = data[1].decode()
+        path = self.folder.getpath(shaname)
+        print("send form server:", path)
+
+        with open(path, "rb") as f:
+            byte = f.read()
+            self.listen.send(byte)
+
+
+    
 
     def run(self):
 
