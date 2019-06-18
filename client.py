@@ -22,6 +22,7 @@ class Client:
 
         self.folderUpload = Folder(basename= 'upload')
         self.folderDownload = Folder(basename= 'download')
+        self.folderJson = Folder(basename= 'jsons')
 
         self.chunck = 1204*1024*10 #10 MB
 
@@ -101,6 +102,45 @@ class Client:
 
             self.submit(dir,trozos[i], i)
 
+    def download(self, dir, sha):
+
+        self.find(sha) # i am in the server for download this
+
+        #question to server if he has the file and look what to do
+        msjToExist = [b'existsFileNow', sha.encode()]
+        self.server.send_multipart(msjToExist)
+        resToExist = self.server.recv().decode()
+        resToExist = int(resToExist) # 1 or 0
+
+        if resToExist:
+
+            print("receving file ",dir ,"from server ")
+            msj = [b'download', sha.encode()]
+            self.server.send_multipart(msj)
+            byte = self.server.recv()
+            path = self.folderDownload.getpath(dir)
+            with open(path , "ab") as f:
+
+                f.write(byte)
+
+        else:
+            print("No se pudo descargar una parte, el server,", self.ipServer + ":" +self.portServer, "no tiene la parte")
+
+    def downloadFile(self,dirjson):
+
+        fileDistribution = {}
+        pathjson = self.folderJson.getpath(dirjson)
+        with open(pathjson, "r") as f:
+            fileDistribution = json.load(f)
+        
+
+        namefile = fileDistribution['name']
+        trozos = fileDistribution['trozos']
+
+        for trozo in trozos:
+            self.download(namefile, trozo)
+
+        
 
     def makeSHAFile(self, dir):
 
@@ -121,9 +161,18 @@ class Client:
 
                 sha1.update(byte)
         print("cantidad de trozos que genera el archivo para upload: ",len(shas))
-        return {'hashfile' : sha1.hexdigest(),
+
+        res = {'hashfile' : sha1.hexdigest(),
                 'trozos' :shas,
                 'name' : dir}
+        
+
+        archivochord = dir.split('.')[0] + ".json"
+        pathjson = self.folderJson.getpath(archivochord)
+        with open(pathjson, "w+") as filejson:
+            json.dump(res , filejson , indent= 4)
+
+        return res
 
     def command(self, data):
 
@@ -154,13 +203,10 @@ class Client:
             print("Server save successfully.")
 
 
-    def download(self):
-        pass
-
 x = Client("127.0.0.1", "3000")
 #sys.argv.pop(0)
 #x.command(sys.argv)
 
-#print(x.makeSHAFile("thekid.mp4"))
 
-x.submitFile("thekid.mp4")
+x.downloadFile("thekid.json")
+#x.submitFile("thekid.mp4")
