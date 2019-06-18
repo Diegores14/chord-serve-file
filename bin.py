@@ -34,7 +34,7 @@ class Bin:
         if i >= 0 :
             ans = ans[0:i] + '1' + ans[i+1:]
             
-        return ans
+        return hex(int(ans, 2)).upper()[2:].zfill(self.n // 4)
 
     def getBinary(self):
 

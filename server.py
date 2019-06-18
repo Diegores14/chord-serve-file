@@ -46,7 +46,8 @@ class Server:
                             "changeTheSuccessorInformation": self.changeTheSuccessorInformation,
                             "upload": self.upload,
                             "download": self.download,
-                            "existsFileNow": self.existsFileNow }
+                            "existsFileNow": self.existsFileNow,
+                            "sendAllFiles": self.sendAllFiles }
 
         print("Server IP:", self.IPListen + ":" + self.portListen)
 
@@ -204,12 +205,39 @@ class Server:
         self.next.send_multipart([b"updatePredecessor", self.id.getHex().encode()])
         print("update successor id",self.next.recv())
 
-        #tell to succesor thah send me my files
-        #enviarle al sucesor, mi id, mi ip y mi puerto
-        #crear funcion que coja la lista que genera el trie y envie uno por uno los elementos que  estan ahi
-
+        #tell to succesor that send me hash of the my files
+        msj = [b"sendAllFiles", self.idPredeccessor.getHex().encode(), self.id.getHex().encode()]
+        self.next.send_multipart(msj)
+        filesHash = self.next.recv_multipart()
+        
+        for fh in filesHash:
+            path = self.folder.getpath(fh.decode())
+            msj = [b'download', fh]
+            self.next.send_multipart(msj)
+            byte = self.next.recv()
+            self.filesManager.insert(fh.decode())
+            with open(path, 'ab') as f :
+                f.write(byte)
 
         #tell to all servers to update the finger table
+
+    def sendAllFiles(self, data) :
+        """ Data = [ operation, idPredeccessor, id] """
+
+        idPredeccessor = Bin(data[1].decode())
+        id = Bin(data[2].decode())
+        idPredeccessor = Bin(idPredecessor.sumKBit(0))
+        l = []
+
+        if idPredeccessor > id:
+
+            self.filesManager.listkeys(idPredeccessor.getHex(), 'F' * (self.k // 4), l)
+            self.filesManager.listkeys('0' * (self.k // 4), id.getHex(), l)
+        else:
+            self.filesManager.listkeys(idPredeccessor.getHex(), id.getHex(), l)
+        l = [i.encode() for i in l]
+        self.listen.send_multipart(l)
+
 
     def existsFileNow(self, data):
 
