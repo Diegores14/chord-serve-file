@@ -206,11 +206,13 @@ class Server:
         print("update successor id",self.next.recv())
 
         #tell to succesor that send me hash of the my files
-        msj = [b"sendAllFiles", self.idPredeccessor.getHex().encode(), self.id.getHex().encode()]
+        msj = [b"sendAllFiles", self.idPredecessor.getHex().encode(), self.id.getHex().encode()]
         self.next.send_multipart(msj)
         filesHash = self.next.recv_multipart()
+        filesHash = filesHash[1:]
         
         for fh in filesHash:
+            print("Recovery files from another server")
             path = self.folder.getpath(fh.decode())
             msj = [b'download', fh]
             self.next.send_multipart(msj)
@@ -226,8 +228,8 @@ class Server:
 
         idPredeccessor = Bin(data[1].decode())
         id = Bin(data[2].decode())
-        idPredeccessor = Bin(idPredecessor.sumKBit(0))
-        l = []
+        idPredeccessor = Bin(idPredeccessor.sumKBit(0))
+        l = ['a']
 
         if idPredeccessor > id:
 
@@ -236,6 +238,7 @@ class Server:
         else:
             self.filesManager.listkeys(idPredeccessor.getHex(), id.getHex(), l)
         l = [i.encode() for i in l]
+        print("lista" , l)
         self.listen.send_multipart(l)
 
 
