@@ -44,14 +44,26 @@ class Trie:
 if __name__ == "__main__":
     
     # test 
-    x = Trie()
-    x.insert("000")
-    x.insert("001")
-    x.insert("002")
-    x.insert("003")
-    x.insert("AA0")
-    l = []
-    # 003 - 000 = 003 - FFF U 000 - 000
-    x.listkeys("003", "FFF", l)
-    x.listkeys("000", "000", l)
-    print(l)
+	x = Trie()
+	x.insert("0")
+	x.insert("1")
+	x.insert("2")
+	x.insert("3")
+	x.insert("4")
+	x.insert("5")
+	x.insert("6")
+	x.insert("7")
+	x.insert("8")
+	x.insert("9")
+	x.insert("A")
+	x.insert("B")
+	x.insert("C")
+	x.insert("D")
+	x.insert("E")
+	x.insert("F")
+	
+	l = []
+	# 003 - 000 = 003 - FFF U 000 - 000
+	x.listkeys("9", "F", l)
+	x.listkeys("0", "3", l)
+	print(l)
