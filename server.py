@@ -205,6 +205,8 @@ class Server:
         print("update successor id",self.next.recv())
 
         #tell to succesor thah send me my files
+        #enviarle al sucesor, mi id, mi ip y mi puerto
+        #crear funcion que coja la lista que genera el trie y envie uno por uno los elementos que  estan ahi
 
 
         #tell to all servers to update the finger table

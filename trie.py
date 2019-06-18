@@ -29,14 +29,14 @@ class Trie:
             
         return self.m[s[idx]].search(s, idx+1)
 
-    def listkeys(self, key, acc, l, flag, idx = 0):
+    def listkeys(self, key,  l, flag = False, idx = 0, acc = ""):
         if idx == len(key) :
             l.append(acc)
         else :
             for x in self.m:
                 if x <= key[idx] or flag:
                     acc += x
-                    self.m[x].listkeys(key, acc, l, flag or x != key[idx], idx+1)
+                    self.m[x].listkeys(key, l, flag or x != key[idx], idx+1,  acc)
                     acc = acc[:-1]
 
 
@@ -51,6 +51,6 @@ if __name__ == "__main__":
     x.insert("003")
     x.insert("AA0")
     l = []
-    x.listkeys("AAA", "", l, False)
+    x.listkeys("AAA", l, False)
     print(l)
             
