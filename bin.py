@@ -42,7 +42,7 @@ class Bin:
 
     def getHex(self):
 
-        return hex(int(self.binary, 2)).upper()[2:]
+        return hex(int(self.binary, 2)).upper()[2:].zfill(self.n // 4)
     
 
     #definicio de metodos magicos para usarlo en todo lado sin problema
@@ -75,8 +75,9 @@ if __name__ == "__main__":
     
     x = hex(25)[2:]
 
-    b = Bin(x)
-    print(b)
+    b = Bin('0000000000000000000000F00000000000000000')
+    #print(b.binary)
+    print(b.getHex())
     # testing
     """
     x = Bin("0FF")

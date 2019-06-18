@@ -1,12 +1,129 @@
 import sys
 import json
+import zmq
+import hashlib
+import random
 
+from folder import Folder
 
-class client:
+tcp = "tcp://"
+class Client:
+
+    ctx = zmq.Context()
+    server = ctx.socket(zmq.REQ)
     
-    def __init__(self):
+    def __init__(self,ipServer, portServer):
         self.route = {"server": self.server, "submit": self.submit, "download": self.download,
                         "help": self.help, "-h" : self.help}
+
+        self.ipServer = ipServer
+        self.portServer = portServer
+
+
+        self.folderUpload = Folder(basename= 'upload')
+        self.folderDownload = Folder(basename= 'download')
+
+        self.chunck = 1204*1024*10 #10 MB
+
+        self.server.connect(tcp + self.ipServer + ":" + self.portServer)
+
+    def find(self, filesha):
+
+        """find the ip and port of the server that contain my id, i am his new predeccessor"""
+        while True:
+
+            ip_port = tcp + self.ipServer + ":" + self.portServer
+            print("Search ubication in:", ip_port)
+
+            #self.server.connect(ip_port)
+
+            self.server.send_multipart([b"idIsInMyInterval", filesha.encode()])#my id is in the next of my next
+            ifind = int(self.server.recv().decode())# 1 or 0
+
+            
+                    
+            if ifind:
+                
+                #print(res)
+                #return (res[0].decode() , res[1].decode())#ip_port for my ubication
+                print("ubication:", self.ipServer, self.portServer)
+                return
+
+            else:
+
+                self.server.send_multipart([b"getSuccessor"])#i get the ip of the next
+                res = self.server.recv_multipart()
+                print("Move to:", res[0].decode() + ":" + res[1].decode())
+                self.ipServer = res[0].decode()
+                self.portServer = res[1].decode()
+
+                self.server.disconnect(ip_port)
+
+                ip_port = tcp + self.ipServer + ":" + self.portServer
+                self.server.connect(ip_port)
+
+
+    def submit(self, dir, sha, pos):
+
+        self.find(sha) # i am in the server for submmit this
+
+        #question to server if he has the file and look what to do
+        msjToExist = [b'existsFileNow', sha.encode()]
+        self.server.send_multipart(msjToExist)
+        resToExist = self.server.recv().decode()
+        resToExist = int(resToExist) # 1 or 0
+
+        if resToExist:
+
+            print("The part of file is in the chord, i dont send that")
+        
+        else:
+
+            print("sending part",pos,"from",dir)
+            path = self.folderUpload.getpath(dir)
+            with open(path, "rb") as f:
+
+                f.seek(pos * self.chunck)
+                byte = f.read(self.chunck)
+                data = [b'upload',sha.encode(), byte]
+                self.server.send_multipart(data)
+                res = self.server.recv()
+                print(res.decode())
+
+
+
+    def submitFile(self,dir):
+        
+        distribution = self.makeSHAFile(dir)
+        trozos = distribution['trozos']
+
+        for i in range(len(trozos)):
+
+            self.submit(dir,trozos[i], i)
+
+
+    def makeSHAFile(self, dir):
+
+
+        sha1 = hashlib.sha1()
+        shas = []
+
+        path = self.folderUpload.getpath(dir)
+        with open(path, "rb") as f:
+            while True:
+                byte = f.read(self.chunck)
+                if not byte:
+                    break
+
+                sha2 = hashlib.sha1()
+                sha2.update(byte)
+                shas.append(sha2.hexdigest())
+
+                sha1.update(byte)
+        print("cantidad de trozos que genera el archivo para upload: ",len(shas))
+        return {'hashfile' : sha1.hexdigest(),
+                'trozos' :shas,
+                'name' : dir}
 
     def command(self, data):
 
@@ -26,7 +143,7 @@ class client:
         print("submit Path-File,     submit file to the cloud")
         print("download File")
 
-    def server(self, data):
+    def saveServer(self, data):
         
         if len(data) < 3 :
             print("Faltan parametros")
@@ -35,13 +152,15 @@ class client:
             with open("dataServer.json", "w+") as f:
                 f.write( "{ \"IP\" : \"" + sys.argv[1] + "\", \"Port\" : \"" + sys.argv[2] + "\" }" )
             print("Server save successfully.")
-    
-    def submit(self):
-        pass
+
 
     def download(self):
         pass
 
-x = client()
-sys.argv.pop(0)
-x.command(sys.argv)
+x = Client("127.0.0.1", "3000")
+#sys.argv.pop(0)
+#x.command(sys.argv)
+
+#print(x.makeSHAFile("thekid.mp4"))
+
+x.submitFile("thekid.mp4")

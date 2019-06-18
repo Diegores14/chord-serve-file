@@ -3,6 +3,7 @@ import sys
 
 from bin import Bin
 from folder import Folder
+from trie import Trie
 
 
 tcp = "tcp://"
@@ -14,9 +15,10 @@ class Server:
     next = context.socket(zmq.REQ)
     
 
-    def __init__(self, id, IPListen, portListen, IPNext, portNext, bootstrap, k = 156):
+    def __init__(self, id, IPListen, portListen, IPNext, portNext, bootstrap, k = 160):
 
         self.folder = Folder(id =portListen)
+        self.filesManager = Trie()    
 
         self.IPListen = IPListen
         self.portListen = portListen
@@ -28,7 +30,9 @@ class Server:
 
         self.id = Bin(id)#aca va entrar la mac, debe crear una funcion que cuadre la mac como sha1
         print("my id:", self.id.getHex())
+
         self.listen.bind(tcp + self.IPListen + ":" + self.portListen)
+
         self.idPredecessor = None
         self.idSuccessor = None
 
@@ -41,7 +45,8 @@ class Server:
                             "getServerID": self.getServerID,
                             "changeTheSuccessorInformation": self.changeTheSuccessorInformation,
                             "upload": self.upload,
-                            "download": self.download }
+                            "download": self.download,
+                            "existsFileNow": self.existsFileNow }
 
         print("Server IP:", self.IPListen + ":" + self.portListen)
 
@@ -164,7 +169,7 @@ class Server:
         self.idSuccessor = Bin(ids)
         self.next.connect(tcp + self.IPNext + ":" + self.portNext)
 
-        self.listen.send(b'Se actualiza successor')
+        self.listen.send(b'Update the successor')
 
     def addServerToChord(self):
         """Add in the middel to two server in the chord
@@ -204,12 +209,25 @@ class Server:
 
         #tell to all servers to update the finger table
 
+    def existsFileNow(self, data):
 
+        shaname = data[1].decode()
+        res = self.filesManager.search(shaname)
+        if(res):
+
+            self.listen.send(b'1')
+        
+        else:
+
+            self.listen.send(b'0')
 
     def upload(self, data):
         """data = [operation, sha, bytestosave] """
 
         shaname = data[1].decode()
+
+        self.filesManager.insert(shaname)
+
         path = self.folder.getpath(shaname)
         print("save into server:", path)
         with open(path, "ab") as f:
@@ -238,7 +256,7 @@ class Server:
         while True:
 
             msj = self.listen.recv_multipart()
-            print(msj)
+            print(msj[0].decode())
             self.operation[msj[0].decode()](msj)
 
 bs = False
@@ -256,4 +274,4 @@ argv[4] -> ipNext:
 argv[5] -> portNext:
 argv[6] -> bootstrap: values 1 o 0// opcional
 """
-server = Server(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], bs, k = 4)
+server = Server(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], bs)

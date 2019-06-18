@@ -108,3 +108,5 @@ venv.bak/
 
 #archivos de descarga
 archivo*/
+download*/
+upload*/

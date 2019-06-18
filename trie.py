@@ -1,4 +1,4 @@
-class trie:
+class Trie:
 
     def __init__(self):
 
@@ -10,7 +10,7 @@ class trie:
         if idx < len(s) :
 
             if not s[idx] in self.m :
-                self.m[s[idx]] = trie()
+                self.m[s[idx]] = Trie()
             self.m[s[idx]].insert(s, idx+1)
 
         else :
@@ -40,14 +40,17 @@ class trie:
                     acc = acc[:-1]
 
 
-# test 
-x = trie()
-x.insert("000")
-x.insert("001")
-x.insert("002")
-x.insert("003")
-x.insert("AA0")
-l = []
-x.listkeys("AAA", "", l, False)
-print(l)
+
+if __name__ == "__main__":
+    
+    # test 
+    x = Trie()
+    x.insert("000")
+    x.insert("001")
+    x.insert("002")
+    x.insert("003")
+    x.insert("AA0")
+    l = []
+    x.listkeys("AAA", "", l, False)
+    print(l)
             
