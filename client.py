@@ -208,5 +208,5 @@ x = Client("127.0.0.1", "3000")
 #x.command(sys.argv)
 
 
-x.downloadFile("aquaman.json")
-#x.submitFile("aquaman.mp4")
+x.downloadFile("myfile3G.json")
+#x.submitFile("myfile3G.txt")

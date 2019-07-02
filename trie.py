@@ -31,6 +31,7 @@ class Trie:
 
     def listkeys(self, key1, key, l, flag = False, flag1 = False, idx = 0, acc = ""):
         if idx == len(key) :
+            print("el del trie")
             l.append(acc)
         else :
             for x in self.m:
@@ -46,20 +47,20 @@ if __name__ == "__main__":
     # test 
 	x = Trie()
 	x.insert("0")
-	x.insert("1")
+	#x.insert("1")
 	x.insert("2")
-	x.insert("3")
+	#x.insert("3")
 	x.insert("4")
-	x.insert("5")
+	#x.insert("5")
 	x.insert("6")
 	x.insert("7")
-	x.insert("8")
+	#x.insert("8")
 	x.insert("9")
-	x.insert("A")
+	#x.insert("A")
 	x.insert("B")
-	x.insert("C")
+	#x.insert("C")
 	x.insert("D")
-	x.insert("E")
+	#x.insert("E")
 	x.insert("F")
 	
 	l = []

@@ -229,14 +229,21 @@ class Server:
         idPredeccessor = Bin(data[1].decode())
         id = Bin(data[2].decode())
         idPredeccessor = Bin(idPredeccessor.sumKBit(0))
+
+        print("sendAllFiles")
+        print("tamaño predecesor:", idPredeccessor.getHex())
+        print("tamaño id", id.getHex())
+        print("mi id", self.id.getHex())
+
+
         l = ['a']
 
         if idPredeccessor > id:
 
-            self.filesManager.listkeys(idPredeccessor.getHex(), 'F' * (self.k // 4), l)
-            self.filesManager.listkeys('0' * (self.k // 4), id.getHex(), l)
+            self.filesManager.listkeys(idPredeccessor.getHex().lower(), 'f' * (self.k // 4), l)
+            self.filesManager.listkeys('0' * (self.k // 4), id.getHex().lower(), l)
         else:
-            self.filesManager.listkeys(idPredeccessor.getHex(), id.getHex(), l)
+            self.filesManager.listkeys(idPredeccessor.getHex().lower(), id.getHex().lower(), l)
         l = [i.encode() for i in l]
         print("lista" , l)
         self.listen.send_multipart(l)
